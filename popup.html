@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h2>🔐 SOCKS5 代理</h2>
+
+    <div class="status" id="status">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">未启用</span>
+    </div>
+
+    <div class="form-group">
+      <label for="proxySelect">代理服务器</label>
+      <select id="proxySelect"></select>
+      <small id="proxyHint">选择一个代理服务器</small>
+    </div>
+
+    <div class="form-group">
+      <label for="bypassList">绕过规则（可选）</label>
+      <textarea
+        id="bypassList"
+        rows="3"
+        placeholder="localhost&#10;127.0.0.1&#10;*.local"
+      ></textarea>
+      <small>每行一条，这些地址不走代理</small>
+    </div>
+
+    <div class="btn-group">
+      <button id="btnEnable" class="btn btn-primary">启用代理</button>
+      <button id="btnDisable" class="btn btn-secondary">关闭代理</button>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="footer">
+      <a href="#" id="openOptions">⚙ 管理代理服务器</a>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

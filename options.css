@@ -1,0 +1,291 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color: #333;
+  background: #f5f6f8;
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 22px;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 13px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-header h2 {
+  margin-bottom: 0;
+}
+
+.badge {
+  display: inline-block;
+  min-width: 22px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3b82f6;
+  background: #eff6ff;
+  border-radius: 10px;
+  text-align: center;
+}
+
+/* ---------- 表单 ---------- */
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.field-grow {
+  flex: 1;
+}
+
+.field-port {
+  width: 120px;
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: #fff;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.field small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #999;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btn {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #555;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.form-error {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #dc2626;
+  min-height: 18px;
+}
+
+/* ---------- 列表 ---------- */
+
+.proxy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.proxy-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  background: #fafbfc;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.proxy-item:hover {
+  border-color: #d0d8e0;
+  background: #fff;
+}
+
+.proxy-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.proxy-name {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.proxy-addr {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 12px;
+  color: #666;
+  word-break: break-all;
+}
+
+.tag-active {
+  font-size: 11px;
+  font-weight: 500;
+  color: #16a34a;
+  background: #dcfce7;
+  padding: 1px 8px;
+  border-radius: 8px;
+}
+
+.proxy-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: transparent;
+}
+
+.btn-icon.edit {
+  color: #3b82f6;
+  border-color: #bfdbfe;
+}
+
+.btn-icon.edit:hover {
+  background: #eff6ff;
+}
+
+.btn-icon.delete {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-icon.delete:hover {
+  background: #fef2f2;
+}
+
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 32px 16px;
+  font-size: 13px;
+}
+
+/* ---------- Toast ---------- */
+
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1a1a1a;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
