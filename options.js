@@ -28,7 +28,7 @@ function init() {
 
   // 实时同步：popup 切换代理时更新“使用中”标记
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && (changes.proxies || changes.activeProxyId)) {
+    if (area === 'local' && changes.proxies) {
       renderList();
     }
   });
@@ -153,7 +153,7 @@ async function renderList() {
 
   els.list.innerHTML = '';
   for (const proxy of listCache) {
-    const isActive = proxy.id === activeId;
+    // const isActive = proxy.id === activeId;
     const item = document.createElement('div');
     item.className = 'proxy-item';
     item.dataset.id = proxy.id;
@@ -164,12 +164,12 @@ async function renderList() {
     const nameEl = document.createElement('div');
     nameEl.className = 'proxy-name';
     nameEl.textContent = proxy.name;
-    if (isActive) {
-      const tag = document.createElement('span');
-      tag.className = 'tag-active';
-      tag.textContent = '使用中';
-      nameEl.appendChild(tag);
-    }
+    // if (isActive) {
+    //   const tag = document.createElement('span');
+    //   tag.className = 'tag-active';
+    //   tag.textContent = '使用中';
+    //   nameEl.appendChild(tag);
+    // }
 
     const addr = document.createElement('div');
     addr.className = 'proxy-addr';
@@ -233,12 +233,12 @@ async function deleteProxy(id) {
   await setProxies(proxies);
 
   // 如果删除的是当前正在使用的代理，同时清除激活状态
-  const activeId = await getActiveId();
-  if (activeId === id) {
-    await chrome.storage.local.set({ activeProxyId: null });
-    // 通知后台关闭代理，避免指向已删除的配置
-    chrome.runtime.sendMessage({ action: 'disableProxy' });
-  }
+  // const activeId = await getActiveId();
+  // if (activeId === id) {
+  //   await chrome.storage.local.set({ activeProxyId: null });
+  //   // 通知后台关闭代理，避免指向已删除的配置
+  //   chrome.runtime.sendMessage({ action: 'disableProxy' });
+  // }
 
   // 若当前正在编辑该条目，重置表单
   if (editingId === id) resetForm();

@@ -10,7 +10,7 @@
 
     <div class="status" id="status">
       <span class="status-dot" id="statusDot"></span>
-      <span id="statusText">未启用</span>
+      <span id="statusText">此标签页未启用代理</span>
     </div>
 
     <div class="form-group">
@@ -21,17 +21,16 @@
 
     <div class="form-group">
       <label for="bypassList">绕过规则（可选）</label>
-      <textarea
-        id="bypassList"
-        rows="3"
-        placeholder="localhost&#10;127.0.0.1&#10;*.local"
-      ></textarea>
-      <small>每行一条，这些地址不走代理</small>
+      <textarea id="bypassList" rows="3"
+        placeholder="localhost&#10;127.0.0.1&#10;*.local"></textarea>
+      <small>每行一条，仅作用于本标签页</small>
     </div>
 
     <div class="btn-group">
-      <button id="btnEnable" class="btn btn-primary">启用代理</button>
-      <button id="btnDisable" class="btn btn-secondary">关闭代理</button>
+      <button id="btnEnable" class="btn btn-primary">为此标签页启用代理</button>
+    </div>
+    <div class="btn-group">
+      <button id="btnDisable" class="btn btn-secondary">取消此标签页的代理</button>
     </div>
 
     <div class="error-msg" id="errorMsg"></div>

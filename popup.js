@@ -1,26 +1,14 @@
 /**
- * SOCKS5 代理插件 — Popup 逻辑
- * 从多代理列表中快速选择并应用
+ * Popup — 针对当前标签页启用/取消代理
  */
 
 document.addEventListener('DOMContentLoaded', init);
 
-const els = {
-  proxySelect: null,
-  proxyHint: null,
-  bypassList: null,
-  btnEnable: null,
-  btnDisable: null,
-  statusDot: null,
-  statusText: null,
-  errorMsg: null,
-  openOptions: null,
-};
-
-/** 内存缓存当前存储的代理列表 */
+const els = {};
+let currentTabId = null;
 let cachedProxies = [];
 
-function init() {
+async function init() {
   els.proxySelect = document.getElementById('proxySelect');
   els.proxyHint = document.getElementById('proxyHint');
   els.bypassList = document.getElementById('bypassList');
@@ -31,48 +19,66 @@ function init() {
   els.errorMsg = document.getElementById('errorMsg');
   els.openOptions = document.getElementById('openOptions');
 
-  els.btnEnable.addEventListener('click', enableProxy);
-  els.btnDisable.addEventListener('click', disableProxy);
+  els.btnEnable.addEventListener('click', onEnable);
+  els.btnDisable.addEventListener('click', onDisable);
   els.openOptions.addEventListener('click', (e) => {
     e.preventDefault();
     chrome.runtime.openOptionsPage();
     window.close();
   });
-
-  // 切换下拉选项时刷新提示
   els.proxySelect.addEventListener('change', updateSelectionHint);
 
-  loadState();
+  // 拿当前标签页
+  const [tab] = await chrome.tabs.query({
+    active: true,
+    lastFocusedWindow: true,
+  });
+  if (!tab || tab.id == null) {
+    showError('无法获取当前标签页');
+    return;
+  }
+  currentTabId = tab.id;
 
-  // 监听存储变化（例如用户在 options 页面修改了列表）
-  chrome.storage.onChanged.addListener(onStorageChanged);
+  await loadState();
 }
-
-/* ---------- 状态加载与渲染 ---------- */
 
 async function loadState() {
-  const state = await chrome.storage.local.get([
-    'proxies',
-    'activeProxyId',
-    'proxyActive',
-    'savedBypassList',
-  ]);
+  const data = await chrome.storage.local.get(['proxies', 'savedBypassList']);
+  cachedProxies = data.proxies || [];
 
-  cachedProxies = state.proxies || [];
+  renderProxyOptions();
 
-  renderProxyOptions(state.activeProxyId);
-  updateStatusUI(!!state.proxyActive);
+  // 默认 bypass 规则
+  els.bypassList.value =
+    data.savedBypassList || 'localhost\n127.0.0.1\n*.local';
 
-  if (state.savedBypassList) {
-    els.bypassList.value = state.savedBypassList;
-  } else {
-    els.bypassList.value = 'localhost\n127.0.0.1\n*.local';
-  }
+  // 查询当前标签页的代理状态
+  chrome.runtime.sendMessage(
+    { action: 'getTabProxyState', tabId: currentTabId },
+    (res) => {
+      if (chrome.runtime.lastError) return;
+      if (!res || !res.success) return;
+
+      if (res.enabled) {
+        updateStatusUI(true);
+        if (res.proxyId) els.proxySelect.value = res.proxyId;
+        if (res.bypassList && res.bypassList.length) {
+          els.bypassList.value = res.bypassList.join('\n');
+        }
+        els.btnEnable.textContent = '更新此标签页代理';
+        els.btnDisable.disabled = false;
+      } else {
+        updateStatusUI(false);
+        els.btnEnable.textContent = '为此标签页启用代理';
+        els.btnDisable.disabled = true;
+      }
+      updateSelectionHint();
+    }
+  );
 }
 
-function renderProxyOptions(activeId) {
+function renderProxyOptions() {
   els.proxySelect.innerHTML = '';
-
   if (cachedProxies.length === 0) {
     const opt = document.createElement('option');
     opt.value = '';
@@ -84,7 +90,6 @@ function renderProxyOptions(activeId) {
     els.proxyHint.classList.add('warn');
     return;
   }
-
   els.proxySelect.disabled = false;
   els.btnEnable.disabled = false;
   els.proxyHint.classList.remove('warn');
@@ -93,108 +98,73 @@ function renderProxyOptions(activeId) {
     const opt = document.createElement('option');
     opt.value = p.id;
     opt.textContent = `${p.name}  (${p.host}:${p.port})`;
-    if (p.id === activeId) opt.selected = true;
     els.proxySelect.appendChild(opt);
   }
-
-  if (!els.proxySelect.value) {
+  if (!els.proxySelect.value && cachedProxies[0]) {
     els.proxySelect.value = cachedProxies[0].id;
   }
-  updateSelectionHint();
 }
 
 function updateSelectionHint() {
   const p = cachedProxies.find((x) => x.id === els.proxySelect.value);
-  if (p) {
-    els.proxyHint.textContent = `socks5://${p.host}:${p.port}`;
-  } else {
-    els.proxyHint.textContent = '选择一个代理服务器';
-  }
+  els.proxyHint.textContent = p
+    ? `socks5://${p.host}:${p.port}`
+    : '选择一个代理服务器';
 }
-
-function onStorageChanged(changes, area) {
-  if (area !== 'local') return;
-  if (changes.proxies) {
-    cachedProxies = changes.proxies.newValue || [];
-    renderProxyOptions(changes.activeProxyId?.newValue);
-  }
-  if (changes.proxyActive) {
-    updateStatusUI(!!changes.proxyActive.newValue);
-  }
-}
-
-/* ---------- UI 工具 ---------- */
 
 function updateStatusUI(isActive) {
   els.statusDot.classList.toggle('active', isActive);
-  els.statusText.textContent = isActive ? '代理已启用' : '未启用';
+  els.statusText.textContent = isActive
+    ? '此标签页已启用代理'
+    : '此标签页未启用代理';
 }
 
-function showError(msg) {
-  els.errorMsg.textContent = msg;
-}
-
-function clearError() {
-  els.errorMsg.textContent = '';
-}
-
-/* ---------- 代理应用 ---------- */
+function showError(msg) { els.errorMsg.textContent = msg; }
+function clearError() { els.errorMsg.textContent = ''; }
 
 function parseBypassList(raw) {
-  return raw
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
+  return raw.split('\n').map((l) => l.trim()).filter(Boolean);
 }
 
-function enableProxy() {
+function onEnable() {
   clearError();
-
   const proxyId = els.proxySelect.value;
-  const proxy = cachedProxies.find((p) => p.id === proxyId);
-  if (!proxy) {
-    showError('请先选择一个代理服务器');
-    return;
-  }
-
+  if (!proxyId) { showError('请先选择一个代理服务器'); return; }
   const bypassList = parseBypassList(els.bypassList.value);
 
   chrome.runtime.sendMessage(
-    {
-      action: 'enableProxy',
-      proxy: { host: proxy.host, port: proxy.port },
-      bypassList,
-    },
-    async (response) => {
+    { action: 'enableProxyForTab', tabId: currentTabId, proxyId, bypassList },
+    (res) => {
       if (chrome.runtime.lastError) {
-        showError('通信失败：' + chrome.runtime.lastError.message);
-        return;
+        showError('通信失败：' + chrome.runtime.lastError.message); return;
       }
-      if (response?.success) {
-        await chrome.storage.local.set({
-          activeProxyId: proxyId,
-          savedBypassList: els.bypassList.value.trim(),
-        });
+      if (res && res.success) {
+        chrome.storage.local.set({ savedBypassList: els.bypassList.value.trim() });
         updateStatusUI(true);
+        els.btnEnable.textContent = '更新此标签页代理';
+        els.btnDisable.disabled = false;
       } else {
-        showError(response?.error || '启用失败');
+        showError((res && res.error) || '启用失败');
       }
     }
   );
 }
 
-function disableProxy() {
+function onDisable() {
   clearError();
-
-  chrome.runtime.sendMessage({ action: 'disableProxy' }, (response) => {
-    if (chrome.runtime.lastError) {
-      showError('通信失败：' + chrome.runtime.lastError.message);
-      return;
+  chrome.runtime.sendMessage(
+    { action: 'disableProxyForTab', tabId: currentTabId },
+    (res) => {
+      if (chrome.runtime.lastError) {
+        showError('通信失败：' + chrome.runtime.lastError.message); return;
+      }
+      if (res && res.success) {
+        updateStatusUI(false);
+        els.btnEnable.textContent = '为此标签页启用代理';
+        els.btnDisable.disabled = true;
+      } else {
+        showError((res && res.error) || '关闭失败');
+      }
     }
-    if (response?.success) {
-      updateStatusUI(false);
-    } else {
-      showError(response?.error || '关闭失败');
-    }
-  });
+  );
 }
