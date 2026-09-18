@@ -40,6 +40,8 @@ async function init() {
   currentTabId = tab.id;
 
   await loadState();
+    // ★ 顺序 / 内容变化时实时刷新下拉框
+  chrome.storage.onChanged.addListener(onStorageChanged);
 }
 
 async function loadState() {
@@ -167,4 +169,22 @@ function onDisable() {
       }
     }
   );
+}
+
+/**
+ * options 页拖动排序或增删代理时，popup 若开着也同步刷新
+ */
+function onStorageChanged(changes, area) {
+  if (area !== 'local' || !changes.proxies) return;
+
+  const prevSelected = els.proxySelect.value;
+  cachedProxies = changes.proxies.newValue || [];
+
+  renderProxyOptions();
+
+  // 尽量保留用户当前的选择
+  if (prevSelected && cachedProxies.some((p) => p.id === prevSelected)) {
+    els.proxySelect.value = prevSelected;
+  }
+  updateSelectionHint();
 }

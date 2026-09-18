@@ -79,7 +79,7 @@ function buildIconImageSet(isOn) {
  * 为指定标签页设置图标与 tooltip
  */
 function setTabIcon(tabId, isOn) {
-  if (tabId == null) return;
+  if (tabId == null || !Number.isFinite(tabId)) return;
   try {
     chrome.action.setIcon({ tabId, imageData: buildIconImageSet(isOn) });
     chrome.action.setTitle({
@@ -286,6 +286,23 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 
 chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area !== 'local') return;
+
+  // ---------- proxiedTabs 变化：只刷受影响的标签页 ----------
+  if (changes[PROXIED_TABS_KEY]) {
+    const oldVal = changes[PROXIED_TABS_KEY].oldValue || {};
+    const newVal = changes[PROXIED_TABS_KEY].newValue || {};
+    const affected = new Set([
+      ...Object.keys(oldVal),
+      ...Object.keys(newVal),
+    ]);
+    for (const tabIdStr of affected) {
+      const tabId = Number(tabIdStr);
+      if (!Number.isFinite(tabId)) continue;
+      setTabIcon(tabId, !!newVal[tabIdStr]);
+    }
+  }
+
+  // ---------- proxies 变化：清理 + 全量刷新图标 ----------
   if (changes[PROXIES_KEY]) {
     const proxies = changes[PROXIES_KEY].newValue || [];
     const validIds = new Set(proxies.map((p) => p.id));
@@ -299,7 +316,11 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     }
     if (changed) {
       await setProxiedTabs(proxied);
-      // ★ 有标签页被清理，刷新它们的图标
+      // setProxiedTabs 会再次触发本监听器，图标会在那里被刷新，
+      // 这里不需要额外做一次。
+    } else {
+      // 未清理任何东西，但已有代理配置可能被编辑（改 host/port），
+      // 已代理的标签页图标状态虽没变，仍需确保图标在位。
       await refreshAllTabIcons();
     }
     syncProxyToActiveTab();
@@ -325,10 +346,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             proxyId: message.proxyId,
             bypassList: message.bypassList || [],
           };
-          await setProxiedTabs(proxied);
+          await setProxiedTabs(proxied);   // ← 图标由 storage.onChanged 负责刷新
 
           await syncProxyToActiveTab();
-          await refreshTabIcon(tabId);         // ★
           sendResponse({ success: true });
           break;
         }
@@ -339,10 +359,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
           const proxied = await getProxiedTabs();
           delete proxied[String(tabId)];
-          await setProxiedTabs(proxied);
+          await setProxiedTabs(proxied);   // ← 同上
 
           await syncProxyToActiveTab();
-          await refreshTabIcon(tabId);         // ★
           sendResponse({ success: true });
           break;
         }
